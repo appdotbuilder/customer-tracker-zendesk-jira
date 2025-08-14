@@ -1,9 +1,29 @@
+import { db } from '../db';
+import { jiraIssuesTable, customersTable } from '../db/schema';
 import { type GetCustomerByIdInput, type JiraIssue } from '../schema';
+import { eq } from 'drizzle-orm';
 
-export async function getCustomerJiraIssues(input: GetCustomerByIdInput): Promise<JiraIssue[]> {
-  // This is a placeholder declaration! Real code should be implemented here.
-  // The goal of this handler is fetching all JIRA issues for a specific customer.
-  // It should retrieve issues from the database and potentially sync with JIRA API
-  // if credentials are available.
-  return Promise.resolve([]);
-}
+export const getCustomerJiraIssues = async (input: GetCustomerByIdInput): Promise<JiraIssue[]> => {
+  try {
+    // First verify the customer exists
+    const customer = await db.select()
+      .from(customersTable)
+      .where(eq(customersTable.id, input.id))
+      .execute();
+
+    if (customer.length === 0) {
+      throw new Error(`Customer with id ${input.id} not found`);
+    }
+
+    // Fetch all JIRA issues for the customer
+    const results = await db.select()
+      .from(jiraIssuesTable)
+      .where(eq(jiraIssuesTable.customer_id, input.id))
+      .execute();
+
+    return results;
+  } catch (error) {
+    console.error('Failed to fetch customer JIRA issues:', error);
+    throw error;
+  }
+};

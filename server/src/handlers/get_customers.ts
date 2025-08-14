@@ -1,7 +1,19 @@
+import { db } from '../db';
+import { customersTable } from '../db/schema';
 import { type Customer } from '../schema';
+import { desc } from 'drizzle-orm';
 
-export async function getCustomers(): Promise<Customer[]> {
-  // This is a placeholder declaration! Real code should be implemented here.
-  // The goal of this handler is fetching all customers from the database.
-  return Promise.resolve([]);
-}
+export const getCustomers = async (): Promise<Customer[]> => {
+  try {
+    // Fetch all customers, ordered by creation date (newest first)
+    const results = await db.select()
+      .from(customersTable)
+      .orderBy(desc(customersTable.created_at))
+      .execute();
+
+    return results;
+  } catch (error) {
+    console.error('Failed to fetch customers:', error);
+    throw error;
+  }
+};
